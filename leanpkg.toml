@@ -1,0 +1,8 @@
+[package]
+name = "Lean_Topology"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.50.3"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "22131150f88a2d125713ffa0f4693e3355b1eb49"}
