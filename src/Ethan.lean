@@ -2,6 +2,7 @@ import topology.basic
 import topology.separation
 open topological_space
 open set filter classical
+open continuous
 variables {X Y : Type} [topological_space X] [topological_space Y]
 
 
@@ -32,11 +33,11 @@ begin
   use U,
   -- claim that U is such open set
 
-  refine ⟨_, _, mem_inter x_in_u fx_in_v⟩,
+  refine ⟨_, _, mem_inter x_in_u fx_in_v⟩;                                                  clear x_in_u fx_in_v x,
   -- x is obivously in U since x is in both u and f ⁻¹' v (v includes f x)
 
   {
-    clear' u_open v_open x_in_u fx_in_v cont x,
+    clear' u_open v_open cont,
     intros y y_in_U f_y_eq_y,
     -- suppose there is y in U s.t. f y = y
 
@@ -45,16 +46,14 @@ begin
     have f_y_in_v:      f y ∈ v         := y_in_preim_v;                                   clear y_in_preim_v,
     have y_in_v :         y ∈ v         := mem_of_eq_of_mem (eq.symm f_y_eq_y) f_y_in_v;   clear f_y_in_v f_y_eq_y f,
     -- Contradiction! since u and v are disjoint
-    
+
     have y_set_in_u:    {y} ≤ u         := singleton_subset_iff.mpr y_in_u;                 clear y_in_u,
     have y_set_in_v:    {y} ≤ v         := singleton_subset_iff.mpr y_in_v;                 clear y_in_v,
-    have y_set_eq_bot                   := u_v_disjoint y_set_in_u y_set_in_v;              clear y_set_in_u y_set_in_v u_v_disjoint u v,
-    have y_in_y_set:     y ∈ {y}        := mem_singleton y,
-    exact y_set_eq_bot y_in_y_set,
+    have y_set_le_bot                   := u_v_disjoint y_set_in_u y_set_in_v;              clear y_set_in_u y_set_in_v u_v_disjoint u v,
+    have y_in_y_set:      y ∈ {y}       := mem_singleton y,
+    exact y_set_le_bot y_in_y_set,
   },
 
   -- U is open because u & v both open and f is continuous so f ⁻¹' v also open
-  refine (continuous_on_open_iff u_open).mp _ v v_open,
-  exact continuous.continuous_on cont,
-
+  exact is_open.inter u_open (is_open_preimage cont v v_open),
 end

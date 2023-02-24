@@ -51,7 +51,76 @@ begin
   exact lecture_interior_to_lean_interior,
 end
 
+lemma lecture_open_is_open : is_open (lecture_interior A) :=
+begin
+  rw ← interior_equivalence,
+  exact is_open_interior,
+end
+
+
 -- Now the turn for equivalence of closure
+
+lemma lecture_closure_is_lecture_interior_of_compl: lecture_closure A = (lecture_interior Aᶜ)ᶜ :=
+begin
+  unfold lecture_closure,
+  unfold lecture_interior,
+  apply set.subset.antisymm; intros x xinlec,
+  {
+    -- lecture_closure ⊆ lecture_interior
+    rw mem_compl_iff,
+    rw set.mem_set_of,
+    push_neg,
+    intros N Nnhd Nopen NsubAc,
+    rw mem_union at xinlec,
+    cases xinlec with xinA xinbound,
+    {
+      have xinN := mem_of_mem_nhds Nnhd,
+      have xinAc := NsubAc xinN,
+      exact xinAc xinA,
+    },
+    {
+      have NinAc := xinbound N Nnhd Nopen,
+      clear xinbound Nnhd Nopen x,
+      rw ← nonempty_iff_ne_empty at NinAc,
+      cases NinAc with y yinAN,
+      have yinA := yinAN.left,
+      have yinN := yinAN.right,
+      have yinAc := NsubAc yinN,
+      exact yinAc yinA,
+    }
+  },
+  {
+    -- lecture_interior ⊆ lecture_closure
+    rw mem_compl_iff at xinlec,
+    rw set.mem_set_of at xinlec,
+    push_neg at xinlec,
+    rw mem_union,
+    cases classical.em (x ∈ A) with xinA xnotinA,
+    {
+      left,
+      exact xinA,
+    },
+    {
+      right,
+      intros N Nnhd Nopen ANdisjoint,
+      have xinN := mem_of_mem_nhds Nnhd,
+      have xinAc := xinlec N Nnhd Nopen,
+      clear xinlec Nnhd Nopen xinN xnotinA x,
+      apply xinAc,
+      refine subset_compl_iff_disjoint_left.mpr _,
+      exact disjoint_iff_inter_eq_empty.mpr ANdisjoint,
+    }
+  },
+end
+
+
+lemma lecture_closure_is_closed : is_closed (lecture_closure A) :=
+begin
+  rw lecture_closure_is_lecture_interior_of_compl,
+  exact is_closed_compl_iff.mpr lecture_open_is_open,
+end
+
+
 lemma lecture_closure_to_lean_closure (x : X): x ∈ lecture_closure A → x ∈ closure A :=
 begin
   -- if x in A, easy since all closed set including A includes x,
@@ -74,31 +143,17 @@ begin
   },
 end
 
--- I don't seem to be able to prove lean_closure_to_lecture_closure directly so 
-lemma useful : (lecture_interior Aᶜ)ᶜ ⊆ lecture_closure A :=
-begin
-  unfold lecture_interior,
-  rw set.compl_set_of,
-  push_neg,
-  intros x b,
-  cases classical.em (x ∈ A),
-  {left,
-    exact h},
-  {
-    right,
-    intros N Nnhd Nopen,
-    rw [set.inter_comm, set.ne_empty_iff_nonempty, ← compl_compl A, set.inter_compl_nonempty_iff],
-    exact b N Nnhd Nopen,
-  },
-end
-
 -- Now that I have the above (definitionaly) useful lemma I can prove this very easily
 lemma lean_closure_to_lecture_closure (x : X): x ∈ closure A → x ∈ lecture_closure A :=
 begin
-  rw closure_eq_compl_interior_compl,
-  rw interior_equivalence,
-  intro a,
-  exact useful a,
+  intros lean_clo,
+  unfold closure at lean_clo,
+  rw set.mem_sInter at lean_clo,
+  have := lean_clo (lecture_closure A), clear lean_clo,
+  apply this, clear this,
+  split,
+  exact lecture_closure_is_closed,
+  exact subset_union_left A {x : X | ∀ (N : set X), N ∈ nhds x → is_open N → A ∩ N ≠ ∅},
 end
 
 -- Antisymm for the last time and DONE!!!!!!!!!!!!!!!!!!!!!!!!!!
